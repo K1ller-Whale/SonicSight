@@ -1,0 +1,46 @@
+flowchart LR
+    LST(("Listener"))
+    SRV(("Backend<br/>server"))
+
+    subgraph SS["SonicSight"]
+        UC01(["UC-01 Start and stop<br/>a listening session"])
+        UC02(["UC-02 Select a<br/>listening mode"])
+        UC03(["UC-03 Switch mode<br/>mid-session"])
+        UC04(["UC-04 View the<br/>localization overlay"])
+        UC05(["UC-05 Solo one<br/>separated track"])
+        UC06(["UC-06 Configure the<br/>server address"])
+        UC07(["UC-07 Recover from<br/>server unavailability"])
+
+        UC08(["UC-08 Tap or drag<br/>to hear a region"])
+        UC09(["UC-09 Follow a region<br/>(sticky long-press)"])
+        UC10(["UC-10 Freeze the<br/>energy map"])
+        UC11(["UC-11 Solo a<br/>discovered source"])
+
+        UC24(["UC-24 TalkBack<br/>explore-by-touch"])
+        UC25(["UC-25 Alternative<br/>region shapes"])
+    end
+
+    LST --- UC01
+    LST --- UC02
+    LST --- UC03
+    LST --- UC04
+    LST --- UC05
+    LST --- UC06
+    LST --- UC08
+    LST --- UC09
+    LST --- UC10
+    LST --- UC11
+
+    UC01 -. "includes" .-> UC02
+    UC03 -. "includes" .-> UC02
+    UC07 -. "extends" .-> UC01
+    UC09 -. "extends" .-> UC08
+
+    UC01 --- SRV
+    UC03 --- SRV
+    UC08 --- SRV
+
+    LGD["Legend: dashed border =<br/>designed, not implemented"]
+
+    classDef planned stroke-dasharray: 5 5;
+    class UC24,UC25,LGD planned;

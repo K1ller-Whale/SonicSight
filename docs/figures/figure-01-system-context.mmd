@@ -1,0 +1,39 @@
+%% Figure 1 - System context. SonicSight technical report.
+flowchart TB
+  subgraph DEV["Android device"]
+    CAM["Camera<br/>CameraX ImageAnalysis"]
+    MIC["Microphone<br/>AudioRecord 44100 Hz"]
+    APP["SonicSight app<br/>Kotlin, MVVM"]
+    OUT["Speaker or headphones<br/>AudioTrack"]
+  end
+
+  subgraph NET["Local network - trust boundary"]
+    LAN["Wi-Fi LAN<br/>gRPC over HTTP/2<br/>plaintext, unauthenticated"]
+  end
+
+  subgraph SRV["Server host - single process"]
+    RPC["gRPC service<br/>port 50051"]
+    WEB["FastAPI service<br/>port 8000"]
+    REG["Model registry<br/>3 selectable model ids"]
+    EPT["Sound of Pixels engine<br/>PyTorch"]
+    ETF["Multisensory engine<br/>TensorFlow 1.x compat"]
+    GPU["NVIDIA GPU<br/>one CUDA context"]
+    CKP[("PyTorch checkpoints<br/>sound / frame / synthesizer")]
+    CKT[("TensorFlow checkpoint<br/>net.tf-160000")]
+  end
+
+  CAM --> APP
+  MIC --> APP
+  APP -->|"StreamChunk: JPEG + PCM16"| LAN
+  LAN -->|"StreamResult: PCM16 + map"| APP
+  APP --> OUT
+
+  LAN --> RPC
+  RPC --> REG
+  WEB --> EPT
+  REG --> EPT
+  REG --> ETF
+  CKP --> EPT
+  CKT --> ETF
+  EPT --> GPU
+  ETF --> GPU

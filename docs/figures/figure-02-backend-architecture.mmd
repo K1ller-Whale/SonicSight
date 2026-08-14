@@ -1,0 +1,73 @@
+%% Figure 2 - Backend architecture by layer. SonicSight technical report.
+flowchart TB
+  subgraph TR["Transport layer"]
+    RPC["gRPC aio server<br/>port 50051, plaintext"]
+    SP["StreamProcess<br/>bidirectional stream"]
+    PV["ProcessVideo<br/>client stream"]
+    HC["HealthCheck<br/>unary"]
+    FA["FastAPI POST /predict<br/>port 8000"]
+  end
+
+  subgraph PS["Per-session state - one set per open stream"]
+    SB["StreamingBuffer<br/>audio ring 15 s + frame ring"]
+    OL["OverlapAddBuffer<br/>2 for halves, 1 for pixel"]
+    RG["WindowCacheRing<br/>pixel mode, capacity 3"]
+    ES["EnergyMapSmoother<br/>pixel mode"]
+    CS["ClusterState<br/>pixel mode"]
+    SD["StreamDumper<br/>optional diagnostics"]
+  end
+
+  subgraph SH["Shared, loaded once per process"]
+    REG["REGISTRY<br/>3 frozen ModelSpec entries"]
+    LK["asyncio.Lock<br/>serializes all GPU work"]
+    EA["SonicSightEngine adapter"]
+    EB["MultisensoryEngine adapter"]
+    INF["InferenceEngine singleton<br/>warp grids, Hann window, EMAs"]
+    TFS["TensorFlow session<br/>finalized graph"]
+  end
+
+  subgraph NN["Neural networks"]
+    UN["net_sound<br/>U-Net 7"]
+    RN["net_frame<br/>dilated ResNet-18, stride 16"]
+    SY["net_synth<br/>InnerProd, 33 parameters"]
+    MG["sourcesep + shift_net graph<br/>separation head + CAM tap"]
+  end
+
+  subgraph CK["Checkpoints on disk"]
+    C1[("sound_best.pth")]
+    C2[("frame_best.pth")]
+    C3[("synthesizer_best.pth")]
+    C4[("net.tf-160000")]
+  end
+
+  CFG["config.py<br/>constants and env toggles"]
+
+  RPC --> SP
+  RPC --> PV
+  RPC --> HC
+  SP -->|"metadata sonicsight-model"| REG
+  SP --> SB
+  SP --> OL
+  SP --> RG
+  RG --> ES
+  RG --> CS
+  SP --> SD
+  REG --> EA
+  REG --> EB
+  HC --> REG
+  PV --> EA
+  FA --> EA
+  EA --> INF
+  EB --> TFS
+  INF --> UN
+  INF --> RN
+  INF --> SY
+  TFS --> MG
+  C1 --> UN
+  C2 --> RN
+  C3 --> SY
+  C4 --> MG
+  CFG --> INF
+  CFG --> REG
+  EA --> LK
+  EB --> LK

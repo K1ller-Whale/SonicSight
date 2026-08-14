@@ -1,0 +1,40 @@
+flowchart LR
+    OPR(("Operator"))
+    DEV(("Developer"))
+    GPU(("GPU /<br/>CUDA stack"))
+
+    subgraph SS["SonicSight backend and tooling"]
+        UC12(["UC-12 Deploy and launch<br/>the backend"])
+        UC13(["UC-13 Provision checkpoints<br/>and the TF environment"])
+        UC14(["UC-14 Configure separation<br/>via environment variables"])
+        UC15(["UC-15 Check backend health"])
+        UC16(["UC-16 Capture diagnostics,<br/>monitor GPU residency"])
+        UC17(["UC-17 Bridge the WSL2<br/>network boundary"])
+
+        UC18(["UC-18 Run the replay<br/>validation harness"])
+        UC19(["UC-19 Run the pixel-mode<br/>A/B harness"])
+        UC20(["UC-20 Run the unit suites"])
+        UC21(["UC-21 Regenerate<br/>protocol stubs"])
+        UC22(["UC-22 Add a model<br/>behind the registry"])
+        UC23(["UC-23 Run the migration<br/>suite T0 to T5"])
+    end
+
+    OPR --- UC12
+    OPR --- UC13
+    OPR --- UC14
+    OPR --- UC15
+    OPR --- UC16
+    OPR --- UC17
+
+    DEV --- UC18
+    DEV --- UC19
+    DEV --- UC20
+    DEV --- UC21
+    DEV --- UC22
+    DEV --- UC23
+
+    UC12 -. "includes" .-> UC13
+    UC22 -. "includes" .-> UC21
+    UC12 --- GPU
+    UC16 --- GPU
+    UC19 --- GPU

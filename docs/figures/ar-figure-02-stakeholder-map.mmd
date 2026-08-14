@@ -1,0 +1,39 @@
+flowchart TB
+    CS["SonicSight case study"]
+
+    subgraph DIRECT["Direct participants"]
+        TM["Project team<br/>(develops, operates, listens)"]
+        SUP["Academic supervisor"]
+        EXAM["Institution and examiners"]
+    end
+
+    subgraph BENEF["Prospective beneficiaries — no direct involvement in this study"]
+        HA["People who use hearing aids"]
+        DHH["d/DHH individuals"]
+    end
+
+    subgraph INCID["Incidentally affected"]
+        BY["Bystanders in the captured<br/>audio and video field"]
+    end
+
+    subgraph UPSTR["Upstream parties"]
+        AUTH["Authors of the two models<br/>(attribution, licensing)"]
+        DATA["Subjects of the training datasets<br/>(AudioSet, VoxCeleb, MUSIC)"]
+    end
+
+    subgraph BOUND["Out-of-scope oversight"]
+        REG["Medical device regulators<br/>(boundary only — no claim made)"]
+    end
+
+    TM --- CS
+    SUP --- CS
+    EXAM --- CS
+    CS -. "findings may inform<br/>future assistive work" .-> HA
+    CS -. "findings may inform<br/>future assistive work" .-> DHH
+    CS -- "capture without<br/>consent mechanism" --- BY
+    AUTH --- CS
+    DATA -.- CS
+    REG -. "scope boundary,<br/>not a relationship" .- CS
+
+    classDef outside stroke-dasharray: 5 5;
+    class HA,DHH,REG,DATA outside;

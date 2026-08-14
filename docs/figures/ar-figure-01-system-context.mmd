@@ -1,0 +1,30 @@
+flowchart LR
+    LST(("Listener"))
+    BYS(("Bystander"))
+    OPR(("Operator"))
+    DEV(("Developer"))
+
+    subgraph HANDSET["Android handset — environment E-A"]
+        APP["SonicSight client<br/>CameraX capture, AudioRecord 44100 Hz,<br/>overlay, dual AudioTrack playback"]
+    end
+
+    subgraph SERVER["Server host — environments E-M / E-D"]
+        GRPC["gRPC server :50051<br/>asyncio, plaintext"]
+        REST["FastAPI :8000<br/>legacy /predict"]
+        REG["Model registry<br/>sonicsight / sonicsight-pixel / multisensory"]
+        GPU["NVIDIA GPU<br/>PyTorch + TensorFlow, one process"]
+        CKPT[("Checkpoints<br/>Sound of Pixels 158.8 MiB<br/>multisensory 1.27 GiB")]
+    end
+
+    LST --- APP
+    BYS -. "captured incidentally<br/>(camera and microphone field)" .-> APP
+    APP <-- "StreamChunk / StreamResult<br/>gRPC bidirectional, LAN" --> GRPC
+    GRPC --> REG
+    REG --> GPU
+    GPU --- CKPT
+    OPR --- GRPC
+    OPR --- REST
+    DEV --- REG
+
+    classDef incidental stroke-dasharray: 5 5;
+    class BYS incidental;

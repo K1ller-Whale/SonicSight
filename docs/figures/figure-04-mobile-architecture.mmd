@@ -1,0 +1,66 @@
+%% Figure 4 - Mobile architecture by MVVM layer. SonicSight technical report.
+flowchart TB
+  subgraph UI["View layer"]
+    ACT["MainActivity<br/>capture, controls, touch"]
+    PVW["PreviewView<br/>fillCenter camera preview"]
+    OVR["ImageView overlay<br/>heatmap or energy map"]
+    LAT["GridLatticeView<br/>touch mode feature grid"]
+    RAIL["Source rail<br/>cluster dots"]
+    RES["ResultActivity<br/>one-shot file result"]
+  end
+
+  subgraph VM["ViewModel layer"]
+    MVM["MainViewModel"]
+    OUTQ["MutableSharedFlow StreamChunk<br/>capacity 64, per stream"]
+    INQ["LiveData + SharedFlow<br/>overlay, audio, sources"]
+  end
+
+  subgraph RP["Repository layer"]
+    REPO["GrpcVideoRepository<br/>attaches sonicsight-model"]
+  end
+
+  subgraph DS["Data sources"]
+    CAMX["CameraX ImageAnalysis<br/>1280x720, keep only latest"]
+    AREC["AudioRecord<br/>44100 Hz mono PCM16"]
+    GM["GrpcModule<br/>ManagedChannel, plaintext"]
+    ATRK["AudioTrack x2 + JitterBuffer"]
+  end
+
+  subgraph UT["Transform utilities"]
+    IT["ImageTransform<br/>halves crop or letterbox"]
+    AD["AudioDecimator<br/>121-tap FIR"]
+    MP["MaskProcessor<br/>magma overlay bitmaps"]
+    CM["CoordinateMap<br/>view to grid cell"]
+  end
+
+  subgraph PR["Generated protobuf stubs"]
+    STB["SonicSightServiceCoroutineStub<br/>StreamChunk, StreamResult"]
+  end
+
+  PROF["ModelProfile<br/>3 client mirrors of ModelSpec"]
+
+  CAMX --> ACT
+  AREC --> ACT
+  ACT --> IT
+  ACT --> AD
+  ACT --> CM
+  IT --> ACT
+  AD --> ACT
+  ACT -->|"sendStreamChunk / sendAudioChunk"| MVM
+  MVM --> OUTQ
+  OUTQ --> REPO
+  REPO --> STB
+  STB --> GM
+  GM --> STB
+  STB --> REPO
+  REPO --> MVM
+  MVM --> MP
+  MP --> INQ
+  INQ --> OVR
+  INQ --> RAIL
+  MVM --> ATRK
+  ACT --> PVW
+  ACT --> LAT
+  PROF --> ACT
+  PROF --> MVM
+  MVM --> RES

@@ -1,0 +1,23 @@
+%% Figure 11 - Window, hop, overlap and latency composition for the halves
+%% branch (model id sonicsight). Times in milliseconds from the start of
+%% window N. SonicSight technical report.
+gantt
+  dateFormat x
+  axisFormat %Ss
+  tickInterval 1second
+  todayMarker off
+  title Analysis windows, the emitted slice, and how latency composes
+
+  section Analysis windows
+  Window N, 65536 samples, 5944 ms      :done, wn,  0,    5944ms
+  Window N+1, hop 125 ms later          :active, w1, 125,  5944ms
+  Window N+2                            :active, w2, 250,  5944ms
+
+  section What is heard
+  Centre slice emitted from window N    :crit, cs, 2972, 125ms
+
+  section Latency after the centre instant
+  Algorithmic, half the window, 2972 ms :crit, alg, 2972, 2972ms
+  Processing, server, not measured here :prc, 5944, 150ms
+  Network and serialisation, not measured :net, 6094, 30ms
+  Jitter buffer target, 200 ms          :jit, 6124, 200ms

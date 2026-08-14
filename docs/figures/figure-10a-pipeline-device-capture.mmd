@@ -1,0 +1,43 @@
+%% Figure 10a - Device capture and pre-processing. Every edge carries the
+%% shape, dtype, rate or byte size of what flows along it.
+%% SonicSight technical report.
+flowchart TB
+  subgraph VID["Video branch"]
+    V1["Camera sensor"]
+    V2["ImageAnalysis analyzer<br/>keep only latest"]
+    V3["imageProxyToBitmap"]
+    V4["Rotate by rotationDegrees"]
+    V5{"profile.frameKind"}
+    V6["Split at width/2"]
+    V7["Scale smallest edge to 256"]
+    V8["Center crop 224"]
+    V9["JPEG encode, quality 90"]
+    VA["Uniform scale 224 / max side"]
+    VB["Draw on grey 224x224 canvas"]
+    VC["JPEG encode, quality 90"]
+  end
+
+  subgraph AUDB["Audio branch"]
+    A1["AudioRecord<br/>44100 Hz mono PCM16"]
+    A2["AudioDecimator<br/>121-tap Hamming sinc, unity DC"]
+  end
+
+  OUT["StreamChunk<br/>timestamp_ms + payload"]
+
+  V1 -->|"YUV_420_888 1280x720<br/>about 30 frames per second"| V2
+  V2 -->|"throttled to profile interval<br/>125 ms halves, 33 ms speech"| V3
+  V3 -->|"NV21 to JPEG to Bitmap<br/>ARGB_8888 1280x720"| V4
+  V4 -->|"Bitmap 1280x720"| V5
+  V5 -->|"LEFT_RIGHT_HALVES"| V6
+  V6 -->|"2 x Bitmap 640x720"| V7
+  V7 -->|"2 x Bitmap 256x288<br/>bilinear"| V8
+  V8 -->|"2 x Bitmap 224x224<br/>crop origin 16, 32"| V9
+  V9 -->|"left_jpeg + right_jpeg<br/>byte size not measured"| OUT
+  V5 -->|"FULL_LETTERBOXED"| VA
+  VA -->|"Bitmap 224x126 for 16 by 9"| VB
+  VB -->|"224x224, 49 grey rows<br/>top and bottom"| VC
+  VC -->|"full_jpeg<br/>byte size not measured"| OUT
+
+  A1 -->|"5512 samples, 11024 bytes<br/>125.0 ms per read"| A2
+  A2 -->|"halves and touch, divide by 4<br/>1378 samples, 2756 B, 11025 Hz"| OUT
+  A2 -->|"speech, divide by 2<br/>2756 samples, 5512 B, 22050 Hz"| OUT

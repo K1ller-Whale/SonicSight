@@ -1,0 +1,27 @@
+%% Figure 8 - Model or mode switch. SonicSight technical report.
+sequenceDiagram
+  autonumber
+  actor User
+  participant ACT as MainActivity
+  participant VM as MainViewModel
+  participant OLDS as Old stream
+  participant NEWS as New stream
+
+  User->>ACT: select a different mode chip
+  ACT->>ACT: status shows Switching to target name
+  ACT->>ACT: stopLiveStreaming
+  ACT->>ACT: cancel audio coroutine, stop and release AudioRecord
+  ACT->>ACT: close mic dump files, stop jitter buffers, release AudioTrack
+  ACT->>OLDS: StreamChunk is_last true
+  ACT->>VM: resetState, cancels the collector job
+  VM->>OLDS: cancel
+  OLDS-->>VM: results still in flight
+  VM->>VM: drop results whose model_id differs from selection
+  ACT->>VM: selectModel target profile
+  VM->>ACT: currentProfile observed, labels, legend, controls update
+  ACT->>ACT: wait 700 ms for mic HAL and old stream release
+  ACT->>ACT: startLiveStreaming with new profile
+  Note over ACT,NEWS: new capture profile takes effect here<br/>frame interval, decimation factor, frame kind, playback rate
+  ACT->>NEWS: open stream with new sonicsight-model metadata
+  NEWS-->>VM: StreamResult echoing the new model_id
+  VM->>VM: model_id matches, result accepted

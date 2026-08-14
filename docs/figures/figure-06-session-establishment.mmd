@@ -1,0 +1,40 @@
+%% Figure 6 - Session establishment. SonicSight technical report.
+sequenceDiagram
+  autonumber
+  actor User
+  participant ACT as MainActivity
+  participant VM as MainViewModel
+  participant REPO as GrpcVideoRepository
+  participant CH as GrpcModule ManagedChannel
+  participant SRV as StreamProcess handler
+  participant REG as Model registry
+  participant BUF as StreamingBuffer
+
+  Note over ACT,CH: The client never calls HealthCheck. The RPC exists and is<br/>exercised only by the manual script and the test plan.
+
+  User->>ACT: tap Start listening
+  ACT->>ACT: setupAudioPlayback at profile.streamRate
+  ACT->>VM: startStreaming
+  VM->>VM: fresh SharedFlow, capacity 64
+  VM->>REPO: streamProcess chunks, modelId
+  REPO->>CH: attach metadata sonicsight-model
+  CH->>CH: build channel if absent, plaintext, keepalive 30 s
+  CH->>SRV: open HTTP/2 stream with headers
+  SRV->>REG: look up ModelSpec by id
+  REG-->>SRV: frozen spec, or None
+  alt unknown id or engine not loaded
+    SRV-->>CH: abort FAILED_PRECONDITION
+    CH-->>VM: Flow catch
+    VM-->>ACT: UiState.Error, mapped to guidance copy
+  else spec resolved
+    SRV->>BUF: construct from spec, window, hop, frames
+    ACT->>ACT: bind CameraX ImageAnalysis, start AudioRecord
+    ACT->>VM: first StreamChunk, audio or frame
+    VM->>CH: emit
+    CH->>SRV: StreamChunk
+    SRV->>BUF: add audio or decoded frame
+    BUF-->>SRV: has_enough_data false
+    SRV-->>VM: StreamResult is_buffering, every 10th chunk
+    VM-->>VM: buffering result ignored
+    ACT->>ACT: hairline fills over expectedFirstResultMs
+  end

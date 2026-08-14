@@ -1,0 +1,45 @@
+flowchart LR
+    D1["D1 Client-server<br/>inference (ADR-0001)"]
+    D2["D2 gRPC bidirectional<br/>streaming (ADR-0002)"]
+    D3["D3 Protocol Buffers<br/>(ADR-0003)"]
+    D4["D4 One process, both<br/>frameworks (ADR-0004)"]
+    D5["D5 Registry + engine<br/>interface (ADR-0005)"]
+    D6["D6 Sliding window +<br/>overlap-add (ADR-0006)"]
+    D7["D7 User-selected<br/>switching (ADR-0007)"]
+    D8["D8 MVVM +<br/>Repository (ADR-0008)"]
+
+    P3(["NFR-PERF-003<br/>cadence"])
+    P4(["NFR-PERF-004<br/>halves cycle time"])
+    P5(["NFR-PERF-005<br/>speech cycle time"])
+    P10(["NFR-PERF-010<br/>both-resident VRAM"])
+    P13(["NFR-PERF-013<br/>result continuity"])
+    R5(["NFR-REL-005<br/>soak stability"])
+    R6(["NFR-REL-006<br/>switch churn"])
+    C1(["NFR-COMPAT-001<br/>proto identity"])
+    C3(["NFR-COMPAT-003<br/>TF-absent service"])
+    I2(["NFR-INT-002<br/>label integrity"])
+    M2(["NFR-MAINT-002<br/>model isolation"])
+    M3(["NFR-MAINT-003<br/>frozen constants"])
+    F1(["NFR-FLEX-001<br/>degraded portability"])
+
+    D1 --> P4
+    D1 --> P5
+    D1 --> F1
+    D2 --> P3
+    D2 --> P13
+    D2 --> C1
+    D3 --> C1
+    D3 --> P3
+    D3 --> P13
+    D4 --> P10
+    D4 --> R6
+    D4 --> C3
+    D4 --> F1
+    D5 --> M2
+    D5 --> M3
+    D5 --> C3
+    D6 --> P3
+    D6 --> R5
+    D7 --> R6
+    D7 --> I2
+    D8 --> I2

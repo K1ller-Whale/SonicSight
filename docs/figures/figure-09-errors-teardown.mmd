@@ -1,0 +1,46 @@
+%% Figure 9 - Error paths and teardown. SonicSight technical report.
+sequenceDiagram
+  autonumber
+  participant ACT as MainActivity
+  participant VM as MainViewModel
+  participant CH as ManagedChannel
+  participant SRV as Server
+
+  rect rgb(245,245,245)
+    Note over ACT,SRV: server unreachable
+    ACT->>VM: startStreaming
+    VM->>CH: open stream
+    CH--xSRV: connection refused or deadline
+    CH-->>VM: UNAVAILABLE surfaced through Flow catch
+    VM->>ACT: UiState.Error
+    ACT->>ACT: describeError names the configured host
+    ACT->>ACT: stopLiveStreaming, recoverable on retry
+  end
+
+  rect rgb(245,245,245)
+    Note over ACT,SRV: checkpoint missing for the selected model
+    VM->>SRV: open stream with sonicsight-model
+    SRV-->>VM: abort FAILED_PRECONDITION, model not loaded
+    VM->>ACT: UiState.Error
+    ACT->>ACT: copy suggests the other mode
+  end
+
+  rect rgb(245,245,245)
+    Note over ACT,SRV: GPU exhaustion during inference
+    SRV-->>VM: StreamResult success false, GPU out of memory
+    VM->>ACT: UiState.Error, stream torn down
+  end
+
+  rect rgb(245,245,245)
+    Note over ACT,SRV: user stops the session
+    ACT->>SRV: StreamChunk is_last true
+    SRV->>SRV: break loop, flush overlap-add tail
+    SRV-->>VM: final StreamResult with the crossfade tail
+    ACT->>ACT: release capture and playback resources
+  end
+
+  rect rgb(245,245,245)
+    Note over ACT,SRV: activity destroyed
+    ACT->>ACT: onDestroy releases audio, camera executor, channel
+    Note over ACT: there is no onPause or onStop handler<br/>backgrounding alone does not stop capture
+  end

@@ -1,0 +1,59 @@
+%% Figure 5 - Mobile threading and dispatcher model. Each subgraph is one
+%% thread or dispatcher; edges crossing subgraphs are hand-offs.
+%% SonicSight technical report.
+flowchart TB
+  subgraph T1["cameraExecutor - single thread"]
+    A1["ImageAnalysis analyzer callback"]
+    A2["Throttle to frameIntervalMs"]
+    A3["YUV to Bitmap, rotate"]
+    A4["Split-scale-crop or letterbox"]
+    A5["JPEG encode, quality 90"]
+    A6["Build StreamChunk"]
+  end
+
+  subgraph T2["Dispatchers.IO - audio capture coroutine"]
+    B1["AudioRecord.read<br/>5512 samples at 44100 Hz"]
+    B2["AudioDecimator.process"]
+    B3["RawAudioDumper write"]
+    B4["Build StreamChunk, suspending emit"]
+  end
+
+  subgraph T3["gRPC okhttp transport threads"]
+    C1["Serialize and send StreamChunk"]
+    C2["Receive and parse StreamResult"]
+  end
+
+  subgraph T4["viewModelScope - Dispatchers.Main"]
+    D1["Collect StreamResult"]
+    D2["Drop stale model_id"]
+    D3["Sequence gap check"]
+  end
+
+  subgraph T5["Dispatchers.IO - render coroutine"]
+    E1["Decode heatmap or energy map"]
+    E2["Build magma bitmap"]
+  end
+
+  subgraph T6["Main thread - UI"]
+    F1["setImageBitmap, overlay matrix"]
+    F2["Grid lattice, source rail, status"]
+    F3["Touch listener, coordinate map"]
+  end
+
+  subgraph T7["JitterBuffer-Drain threads x2"]
+    G1["Ring buffer read, 256 samples"]
+    G2["AudioTrack.write, blocking"]
+  end
+
+  A1 --> A2 --> A3 --> A4 --> A5 --> A6
+  A6 -->|"tryEmit, droppable"| C1
+  B1 --> B2 --> B3 --> B4
+  B4 -->|"emit, lossless"| C1
+  C2 --> D1 --> D2 --> D3
+  D3 -->|"overlay payload"| E1
+  E1 --> E2
+  E2 -->|"withContext Main"| F1
+  D3 -->|"PCM bytes"| G1
+  G1 --> G2
+  F3 -->|"PixelQuery"| D1
+  F1 --> F2

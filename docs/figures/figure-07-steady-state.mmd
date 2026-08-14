@@ -1,0 +1,35 @@
+%% Figure 7 - Steady-state streaming, halves mode. Rates and sizes are the
+%% computed wire values for model id sonicsight. SonicSight technical report.
+sequenceDiagram
+  autonumber
+  participant CAM as cameraExecutor
+  participant AUD as audio coroutine
+  participant NET as gRPC stream
+  participant SRV as StreamProcess loop
+  participant ENG as SonicSightEngine
+  participant OLA as OverlapAddBuffer
+  participant JB as JitterBuffer
+  participant OVR as Overlay
+
+  loop every 125 ms, 8 per second
+    CAM->>NET: StreamChunk left_jpeg + right_jpeg, 224x224 each
+  end
+  loop every 125 ms, 8 per second
+    AUD->>NET: StreamChunk audio_pcm, 1378 samples, 2756 bytes
+  end
+
+  NET->>SRV: chunks interleaved, about 16 per second
+  SRV->>SRV: append audio, decode JPEG on worker thread
+  SRV->>SRV: select newest window, start aligned to 256 samples
+
+  Note over SRV,ENG: one window is 65536 samples, 5.944 s<br/>starts advance by 1280, 1536 or 1792 samples
+
+  SRV->>ENG: eval_stream_window, under the GPU lock
+  ENG-->>SRV: 2 x 65536 float32 audio, 2 x 56x56 float32 map
+  SRV->>OLA: add_window per side, start_sample absolute
+  OLA-->>SRV: drain, about 1378 samples per side
+  SRV-->>NET: StreamResult, about 2756 B audio per side + 3136 B per map
+  NET->>JB: left and right PCM16
+  NET->>OVR: two uint8 maps, stitched to one bitmap
+  JB->>JB: ring buffer, drain 256 samples per write
+  OVR->>OVR: magma colour, alpha equals value to the power 2.5

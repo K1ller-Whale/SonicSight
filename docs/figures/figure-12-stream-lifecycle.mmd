@@ -1,0 +1,37 @@
+%% Figure 12 - Stream lifecycle state machine as implemented.
+%% SonicSight technical report.
+stateDiagram-v2
+  [*] --> Idle
+
+  Idle --> Connecting : user presses start
+  Idle --> Idle : model chip selected while idle
+
+  Connecting --> Buffering : stream opened, spec resolved
+  Connecting --> Error : FAILED_PRECONDITION or UNAVAILABLE
+
+  Buffering --> Streaming : first non-buffering result
+  Buffering --> Error : transport failure
+  Buffering --> Terminated : user presses stop
+
+  Streaming --> Streaming : result accepted, overlay and audio updated
+  Streaming --> Streaming : result dropped, model_id mismatch
+  Streaming --> Switching : model chip selected while streaming
+  Streaming --> Error : transport failure or server error result
+  Streaming --> Terminated : user presses stop
+
+  Switching --> Connecting : after 700 ms, reopen with new metadata
+
+  Error --> Idle : session torn down, user may retry
+  Terminated --> Idle : resources released
+
+  note right of Error
+    No automatic reconnection exists.
+    Recovery is always user initiated.
+  end note
+
+  note right of Streaming
+    Pixel mode adds two latched
+    sub-behaviours inside this state:
+    freeze pins a window, and a sticky
+    region replaces the mixture.
+  end note

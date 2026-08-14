@@ -1,0 +1,56 @@
+%% Figure 10c - Reconstruction, transport and playback for model id
+%% sonicsight. SonicSight technical report.
+flowchart TB
+  subgraph REC["Reconstruction, server"]
+    C1["grid_sample, inverse log-frequency warp"]
+    C2["Renormalise across the source pair"]
+    C3["Multiply by mixture magnitude"]
+    C4["Polar with mixture phase"]
+    C5["torch.istft<br/>n_fft 1022, hop 256, length 65536"]
+    C6["Divide by input gain, clamp"]
+  end
+
+  subgraph STI["Stitching, server"]
+    D1["OverlapAddBuffer per side<br/>centre start 32079, hop 1378"]
+    D2["Crossfade 128 samples<br/>sine squared in, cosine squared out"]
+    D3["Quantise to PCM16"]
+  end
+
+  subgraph WIRE["Wire"]
+    W1["StreamResult"]
+    W2["gzip level 1<br/>gRPC channel option"]
+  end
+
+  subgraph CLI["Client"]
+    E1["Drop if model_id differs"]
+    E2["Sequence gap check, insert silence"]
+    E3["JitterBuffer per side<br/>200 ms initial, 1500 ms ring"]
+    E4["AudioTrack x2, hard panned"]
+    E5["createTransparentHeatmap<br/>side inferred from byte count"]
+    E6["Magma colour, alpha value^2.5 x 200"]
+    E7["Stitch left and right"]
+    E8["ImageView FIT_XY, alpha 0.75"]
+  end
+
+  MASK["mask 2x1x256x256<br/>from Figure 10b"] --> C1
+  C1 -->|"2x1x512x256, linear frequency"| C2
+  C2 -->|"2x512x256, pair sums to 1 per bin"| C3
+  MAG["mixture magnitude 512x256"] --> C3
+  C3 -->|"2x512x256 float32"| C4
+  PH["mixture phase 512x256"] --> C4
+  C4 -->|"complex64 2x512x256"| C5
+  C5 -->|"2x65536 float32"| C6
+  C6 -->|"2x65536 in -1..1"| D1
+  D1 -->|"centre slice, length equals<br/>window advance, 1280 to 1792"| D2
+  D2 -->|"float64 segment"| D3
+  D3 -->|"about 2756 bytes per side"| W1
+  HM["heatmaps 2x56x56"] -->|"multiply by 255, uint8<br/>3136 bytes per side"| W1
+  W1 --> W2
+  W2 -->|"about 11.8 kB per result<br/>about 8 results per second"| E1
+  E1 --> E2
+  E2 -->|"PCM16 per side"| E3
+  E3 -->|"256-sample writes"| E4
+  E1 -->|"uint8 3136 bytes per side"| E5
+  E5 -->|"56x56 ARGB"| E6
+  E6 -->|"scaled to 336x336"| E7
+  E7 -->|"672x336 ARGB"| E8

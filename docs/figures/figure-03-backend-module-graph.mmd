@@ -1,0 +1,56 @@
+%% Figure 3 - Backend module dependency graph, derived from the import
+%% statements. Solid = module-level import. Dotted = deferred import inside a
+%% function. SonicSight technical report.
+flowchart TB
+  RS["run_servers"]
+  GS["grpc_server"]
+  MN["main"]
+  MR["model_registry"]
+  EP["engines"]
+  ES["engines.sonicsight_engine"]
+  EM["engines.multisensory_engine"]
+  IN["inference"]
+  PC["pixel_cache"]
+  CL["clustering"]
+  OA["overlap_add_buffer"]
+  SD["stream_dump"]
+  VP["video_preprocessor"]
+  CF["config"]
+  MD["models"]
+  UU["utils.utils"]
+  VT["utils.video_transforms"]
+  DC["utils.debugging_clock"]
+  PB["sonicsight_pb2<br/>sonicsight_pb2_grpc"]
+  MS["multisensory repo<br/>sep_params, sep_video"]
+
+  RS --> GS
+  RS --> MR
+  RS -.-> MN
+  MN --> IN
+  MN --> VP
+  GS --> PB
+  GS --> IN
+  GS --> OA
+  GS --> VP
+  GS --> CF
+  GS --> SD
+  GS --> MR
+  GS -.-> PC
+  GS -.-> CL
+  MR --> CF
+  MR -.-> ES
+  MR -.-> EM
+  ES --> EP
+  ES --> IN
+  EM --> EP
+  EM -.-> MS
+  IN --> MD
+  IN --> CF
+  IN --> VT
+  IN --> UU
+  IN --> DC
+  PC --> CF
+  CL --> PC
+  OA --> CF
+  SD --> CF
+  VP --> CF
