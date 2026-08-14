@@ -1,0 +1,58 @@
+cff-version: 1.2.0
+title: SonicSight
+message: >-
+  If you refer to this work, please cite it, and cite the two
+  underlying models listed in the references below.
+type: software
+authors:
+  - given-names: Jaafer
+    family-names: Mahfoud
+  - given-names: Hatem
+    family-names: Ibrahim
+abstract: >-
+  A near-real-time, visually guided audio source separation system
+  running on consumer hardware. An Android client captures camera and
+  microphone together and streams both to an inference server over
+  bidirectional gRPC; the server returns two separated audio tracks and
+  a heatmap locating the sound source in the scene. Two pre-trained
+  models of different architectures and frameworks are integrated behind
+  a single frozen specification registry and share one consumer GPU in
+  one process. The study finds that perceptual latency is imposed by the
+  models' analysis-window structure rather than by systems engineering.
+keywords:
+  - audio-visual source separation
+  - self-supervised learning
+  - gRPC
+  - Android
+  - algorithmic latency
+year: 2026
+references:
+  - type: conference-paper
+    title: The Sound of Pixels
+    year: 2018
+    collection-title: >-
+      Proceedings of the European Conference on Computer Vision (ECCV)
+    authors:
+      - given-names: Hang
+        family-names: Zhao
+      - given-names: Chuang
+        family-names: Gan
+      - given-names: Andrew
+        family-names: Rouditchenko
+      - given-names: Carl
+        family-names: Vondrick
+      - given-names: Josh
+        family-names: McDermott
+      - given-names: Antonio
+        family-names: Torralba
+  - type: conference-paper
+    title: >-
+      Audio-Visual Scene Analysis with Self-Supervised Multisensory Features
+    year: 2018
+    collection-title: >-
+      Proceedings of the European Conference on Computer Vision (ECCV)
+    authors:
+      - given-names: Andrew
+        family-names: Owens
+      - given-names: Alexei A.
+        family-names: Efros
