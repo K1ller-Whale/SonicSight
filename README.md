@@ -34,15 +34,6 @@ This repository is an index. The code lives in three places.
 | **[SonicSightMobile](https://github.com/K1ller-Whale/SonicSightMobile)** | The Android client: capture, pre-processing, transport, jitter buffer, dual-track playback, heatmap overlay, touch interaction. Kotlin, MVVM with a repository layer. |
 | **[multisensory](https://github.com/K1ller-Whale/multisensory)** | Fork of [andrewowens/multisensory](https://github.com/andrewowens/multisensory), ported from Python 2 to Python 3 and running under the TensorFlow v1 compatibility layer inside TensorFlow 2.21. The speech engine loads from here. |
 
-> **Pin the state the report describes.** The measurements in the project
-> report refer to specific commits. Tag them in each repository so the numbers
-> stay resolvable:
-> ```bash
-> git tag -a report/2026-08 -m "State described by the project report" <sha>
-> git push origin report/2026-08
-> ```
-> Then record the three SHAs in the table above. *(To fill in.)*
-
 ---
 
 ## Architecture
